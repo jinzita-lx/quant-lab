@@ -10,41 +10,89 @@
 
 当前版本重点是建立一致的工程边界，而不是直接提供可实盘策略。实盘所需的凭证、订单路由、风控阈值、监控告警和审计日志仍需要按交易团队要求继续补强。未来可接入 `vectorbt`、`backtrader`、`freqtrade` 作为更成熟的研究或执行层。
 
-## 快速开始
+## 前置条件
 
-本项目使用 [uv](https://docs.astral.sh/uv/) 管理虚拟环境和依赖。如未安装，执行：
+本项目使用 [uv](https://docs.astral.sh/uv/) 管理虚拟环境和依赖。如未安装：
 
 ```bash
 curl -LsSf https://astral.sh/uv/install.sh | sh
 ```
 
-克隆项目后，一条命令装好所有依赖（uv 会自动创建 `.venv/` 并按 `uv.lock` 锁定的版本安装）：
+根据提示把 `~/.local/bin` 加入 `PATH`（或执行 `uv tool update-shell` 由 uv 自动处理）。
+
+---
+
+## 作为 CLI 工具安装（推荐给只想使用的人）
+
+克隆仓库后在项目目录执行：
 
 ```bash
+git clone git@github.com:jinzita-lx/quant-lab.git
+cd quant-lab
+uv tool install .
+```
+
+之后在任意目录下都可以直接调用 `quant-lab`，就像 `git`、`ls` 一样：
+
+```bash
+quant-lab --help
+quant-lab show-config --config /path/to/configs/example.toml
+quant-lab backtest --config /path/to/configs/example.toml --strategy btc_ma_cross
+```
+
+升级、卸载：
+
+```bash
+uv tool upgrade crypto-quant-lab   # 重新从本地代码编译安装
+uv tool uninstall crypto-quant-lab # 卸载
+```
+
+注意：`uv tool install .` 会把当前代码**快照**打包安装到 uv 的工具目录（`~/.local/share/uv/tools/`），之后改源码**不会**自动生效，需要重新 `uv tool install --reinstall .`。如果你要改代码，请看下一节。
+
+---
+
+## 开发模式（推荐给要改代码 / 跑测试 / 添加策略的人）
+
+克隆后用 `uv sync` 创建隔离环境并安装为**可编辑模式**（`-e`，改源码立即生效）：
+
+```bash
+git clone git@github.com:jinzita-lx/quant-lab.git
+cd quant-lab
 uv sync
 ```
 
-之后所有命令都通过 `uv run` 调用，无需手动 `source activate`：
+这会自动：
+- 创建 `.venv/`
+- 按 `uv.lock` 锁定的版本装好所有依赖（含 dev 组，如 `pytest`）
+- 把 `src/crypto_quant_lab/` 以 editable 方式装进去
+
+之后所有命令用 `uv run` 在项目环境里执行，不需要手动激活：
 
 ```bash
 uv run quant-lab show-config --config configs/example.toml
 uv run quant-lab list-strategies --config configs/example.toml
 uv run quant-lab backtest --config configs/example.toml --strategy btc_ma_cross
 uv run quant-lab walk-forward --config configs/example.toml --strategy btc_ma_cross --train-size 20 --test-size 10
+uv run pytest -q
 ```
 
-若习惯传统方式，也可以手动激活：
+如果你习惯传统方式，也可以激活虚拟环境后直接调用：
 
 ```bash
 source .venv/bin/activate
 quant-lab show-config --config configs/example.toml
+pytest -q
+deactivate
 ```
 
-运行测试：
+添加新依赖：
 
 ```bash
-uv run pytest -q
+uv add ccxt-pro        # 加到主依赖
+uv add --dev ipython   # 加到 dev 组
 ```
+
+`uv add` 会自动更新 `pyproject.toml` 和 `uv.lock`，并把新包装进 `.venv/`。
 
 如果你有自己的 OHLCV 数据，可以传入 CSV：
 
