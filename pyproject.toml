@@ -23,9 +23,6 @@ dev = [
 [project.scripts]
 quant-lab = "crypto_quant_lab.cli:app"
 
-[tool.setuptools]
-package-dir = {"" = "src"}
-
 [tool.setuptools.packages.find]
 where = ["src"]
 
