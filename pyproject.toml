@@ -15,13 +15,13 @@ readme = "README.md"
 requires-python = ">=3.11"
 version = "0.1.0"
 
-[project.optional-dependencies]
+[project.scripts]
+quant-lab = "crypto_quant_lab.cli:app"
+
+[dependency-groups]
 dev = [
   "pytest>=8.0.0",
 ]
-
-[project.scripts]
-quant-lab = "crypto_quant_lab.cli:app"
 
 [tool.setuptools.packages.find]
 where = ["src"]

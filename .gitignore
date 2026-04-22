@@ -11,6 +11,7 @@ venv/
 
 # Local logs / session artifacts
 .claude_logs/
+.claude/
 .codex
 
 # Local secrets — only commit the .example template
