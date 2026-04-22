@@ -1,0 +1,23 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+
+# Virtual environments
+.venv/
+.venv-tdd/
+venv/
+
+# Local logs / session artifacts
+.claude_logs/
+.codex
+
+# Local secrets — only commit the .example template
+.okx_demo_env
+*.env
+
+# Editor / OS
+.DS_Store
+.idea/
+.vscode/

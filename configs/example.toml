@@ -1,0 +1,58 @@
+[app]
+default_exchange = "binance"
+env = "dev"
+name = "crypto-quant-lab"
+quote_currency = "USDT"
+
+[backtest]
+fee_rate = 0.0005
+initial_capital = 100000.0
+slippage_bps = 2.0
+timeframe = "1h"
+
+[risk]
+max_daily_loss_pct = 0.05
+max_open_positions = 3
+max_position_notional = 10000.0
+stop_loss_pct = 0.02
+take_profit_pct = 0.04
+
+[exchanges.binance]
+api_key_env = "BINANCE_API_KEY"
+api_secret_env = "BINANCE_API_SECRET"
+enabled = true
+testnet = true
+
+[exchanges.okx]
+api_key_env = "OKX_API_KEY"
+api_secret_env = "OKX_API_SECRET"
+enabled = true
+paper_trading = true
+password_env = "OKX_API_PASSWORD"
+testnet = true
+
+[[strategies]]
+exchange = "binance"
+kind = "moving_average"
+name = "btc_ma_cross"
+symbol = "BTC/USDT"
+timeframe = "1h"
+
+[strategies.params]
+long_window = 20
+short_window = 5
+
+[[strategies]]
+exchange = "binance"
+kind = "spread_arbitrage"
+name = "btc_okx_binance_spread"
+symbol = "BTC/USDT"
+timeframe = "1m"
+
+[strategies.params]
+buy_exchange = "binance"
+entry_spread_bps = 8.0
+exit_spread_bps = 3.0
+primary_price_column = "close_primary"
+secondary_price_column = "close_secondary"
+sell_exchange = "okx"
