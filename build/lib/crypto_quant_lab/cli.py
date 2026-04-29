@@ -8,7 +8,6 @@ from pathlib import Path
 
 import typer
 
-from crypto_quant_lab import __version__
 from crypto_quant_lab.backtest import (
     generate_sample_market_data,
     generate_sample_spread_data,
@@ -27,13 +26,6 @@ app = typer.Typer(help="Crypto Quant Lab 命令行工具")
 def _resolve_strategy(config: ProjectConfig, strategy_name: str | None):
     strategy_config = config.strategies[0] if strategy_name is None else config.get_strategy(strategy_name)
     return build_strategy(strategy_config)
-
-
-@app.command("version")
-def version() -> None:
-    """显示当前版本。"""
-
-    typer.echo(f"quant-lab {__version__}")
 
 
 @app.command("show-config")

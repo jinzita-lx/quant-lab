@@ -3,10 +3,18 @@ import json
 
 from typer.testing import CliRunner
 
+from crypto_quant_lab import __version__
 from crypto_quant_lab.cli import app
 
 
 runner = CliRunner()
+
+
+def test_version_command_prints_package_version() -> None:
+    result = runner.invoke(app, ["version"])
+
+    assert result.exit_code == 0
+    assert result.stdout == f"quant-lab {__version__}\n"
 
 
 def test_walk_forward_command_prints_aggregate_metrics() -> None:
