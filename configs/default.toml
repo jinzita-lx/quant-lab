@@ -1,9 +1,4 @@
-# Crypto Quant Lab 示例配置模板。
-# 用法：复制为 configs/default.toml（或自己的名字）后按需修改。
-# CLI 默认会读 ./configs/default.toml，可用 --config 或 $QUANT_LAB_CONFIG 覆盖。
-
 [app]
-# 默认交易所，必须在下面 [exchanges.*] 中存在。
 default_exchange = "okx"
 env = "dev"
 name = "crypto-quant-lab"
@@ -22,21 +17,19 @@ max_position_notional = 10000.0
 stop_loss_pct = 0.02
 take_profit_pct = 0.04
 
-# 项目级出网代理：所有交易所默认共用，最常见的写法。
-# 留空则回退到 shell 环境变量 https_proxy / HTTPS_PROXY / http_proxy / HTTP_PROXY。
-# 单交易所如需走另一个代理，再在 [exchanges.<name>] 下覆盖 https_proxy / http_proxy。
+# 项目级出网代理：所有交易所默认共用。
+# 单个交易所可在 [exchanges.<name>] 中再覆盖，否则继承这里。
+# 留空则回退到 shell 环境变量 https_proxy / HTTPS_PROXY。
 [network]
 # https_proxy = "http://127.0.0.1:7890"
 # http_proxy  = "http://127.0.0.1:7890"
 
-# Binance 现货 / 测试网。私钥通过环境变量注入。
 [exchanges.binance]
 api_key_env = "BINANCE_API_KEY"
 api_secret_env = "BINANCE_API_SECRET"
 enabled = true
 testnet = true
 
-# OKX 模拟盘（paper trading）。三个环境变量也可写入项目根的 .okx_demo_env，CLI 会自动加载。
 [exchanges.okx]
 api_key_env = "OKX_API_KEY"
 api_secret_env = "OKX_API_SECRET"
@@ -45,7 +38,6 @@ paper_trading = true
 password_env = "OKX_API_PASSWORD"
 testnet = true
 
-# 示例策略 1：均线穿越（单交易所）。
 [[strategies]]
 exchange = "binance"
 kind = "moving_average"
@@ -57,7 +49,6 @@ timeframe = "1h"
 long_window = 20
 short_window = 5
 
-# 示例策略 2：跨所价差套利占位（仅信号，不执行真实下单）。
 [[strategies]]
 exchange = "binance"
 kind = "spread_arbitrage"

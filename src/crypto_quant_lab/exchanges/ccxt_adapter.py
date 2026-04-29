@@ -60,6 +60,8 @@ class CCXTExchangeAdapter(ExchangeAdapter):
         client_class = getattr(ccxt, self.exchange_name)
         client = client_class(client_kwargs)
 
+        self._apply_proxy(client)
+
         if self.config.testnet and hasattr(client, "set_sandbox_mode"):
             try:
                 client.set_sandbox_mode(True)
@@ -68,6 +70,19 @@ class CCXTExchangeAdapter(ExchangeAdapter):
 
         self._client = client
         return client
+
+    def _apply_proxy(self, client: Any) -> None:
+        """把配置中的代理写到 ccxt client 上。
+        ccxt 4.x 要求 httpProxy/httpsProxy/socksProxy 只能选一个，否则报
+        InvalidProxySettings。我们统一只用 https_proxy 这一条。"""
+
+        proxy = self.config.resolved_https_proxy() or self.config.resolved_http_proxy()
+        if not proxy:
+            return
+        if hasattr(client, "https_proxy"):
+            client.https_proxy = proxy
+        if hasattr(client, "aiohttp_proxy"):
+            client.aiohttp_proxy = proxy
 
     def load_exchange_metadata(self) -> ExchangeMetadata:
         if self._metadata is not None:

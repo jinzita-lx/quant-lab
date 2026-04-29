@@ -87,6 +87,31 @@ class RiskConfig(BaseModel):
     max_open_positions: int = 3
 
 
+class NetworkConfig(BaseModel):
+    """项目级网络配置（出网代理等）。
+
+    单交易所可在 ExchangeConfig 中覆盖；未覆盖时这里的值作为默认。
+    """
+
+    model_config = ConfigDict(extra="forbid")
+
+    https_proxy: str | None = None
+    http_proxy: str | None = None
+
+    def resolved_https_proxy(self) -> str | None:
+        if self.https_proxy:
+            return self.https_proxy
+        return os.getenv("https_proxy") or os.getenv("HTTPS_PROXY")
+
+    def resolved_http_proxy(self) -> str | None:
+        if self.http_proxy:
+            return self.http_proxy
+        env_value = os.getenv("http_proxy") or os.getenv("HTTP_PROXY")
+        if env_value:
+            return env_value
+        return self.resolved_https_proxy()
+
+
 class ExchangeConfig(BaseModel):
     """交易所配置。"""
 
@@ -101,6 +126,7 @@ class ExchangeConfig(BaseModel):
     password_env: str | None = None
     testnet: bool = True
     paper_trading: bool = False
+    http_proxy: str | None = None
     https_proxy: str | None = None
     rate_limit_ms: int = 1000
 
@@ -126,6 +152,18 @@ class ExchangeConfig(BaseModel):
         if self.https_proxy:
             return self.https_proxy
         return os.getenv("https_proxy") or os.getenv("HTTPS_PROXY")
+
+    def resolved_http_proxy(self) -> str | None:
+        """返回显式配置的 http_proxy，或退回到 shell 环境变量；
+        若仅配置了 https_proxy，也作为 http 代理使用（多数代理同一地址）。"""
+
+        if self.http_proxy:
+            return self.http_proxy
+        env_value = os.getenv("http_proxy") or os.getenv("HTTP_PROXY")
+        if env_value:
+            return env_value
+        # 没有任何 http 设置时，复用 https 代理：内网代理几乎都是同一个 URL
+        return self.resolved_https_proxy()
 
     @staticmethod
     def _read_env(name: str | None) -> str | None:
@@ -182,6 +220,7 @@ class ProjectConfig(BaseModel):
     strategies: list[StrategyConfig] = Field(default_factory=list)
     risk: RiskConfig = Field(default_factory=RiskConfig)
     backtest: BacktestConfig = Field(default_factory=BacktestConfig)
+    network: NetworkConfig = Field(default_factory=NetworkConfig)
 
     @field_validator("exchanges", mode="before")
     @classmethod
@@ -214,6 +253,28 @@ class ProjectConfig(BaseModel):
         if normalized not in self.exchanges:
             raise KeyError(f"未找到交易所配置: {name}")
         return self.exchanges[normalized]
+
+    def effective_proxy_for(self, exchange_name: str) -> dict[str, str | None]:
+        """合并交易所级 / 项目级 / 环境变量代理设置。
+
+        优先级（从高到低，按"哪一层先指定"决定整对代理的来源）：
+          1. exchanges.<name>.https_proxy / http_proxy（任一存在则只在该层内互补）
+          2. [network].https_proxy / http_proxy
+          3. 环境变量 https_proxy / HTTPS_PROXY / http_proxy / HTTP_PROXY
+
+        返回 {"https": ..., "http": ...}，缺省值为 None。
+        """
+
+        exchange_config = self.get_exchange(exchange_name)
+        if exchange_config.https_proxy or exchange_config.http_proxy:
+            https = exchange_config.https_proxy or exchange_config.http_proxy
+            http = exchange_config.http_proxy or exchange_config.https_proxy
+            return {"https": https, "http": http}
+
+        return {
+            "https": self.network.resolved_https_proxy(),
+            "http": self.network.resolved_http_proxy(),
+        }
 
     def get_strategy(self, name: str) -> StrategyConfig:
         """按名称获取策略配置。"""
